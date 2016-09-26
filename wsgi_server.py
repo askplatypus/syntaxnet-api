@@ -16,7 +16,8 @@ import parsey
 
 class CORSMiddleware(object):
     _allow_origin = '*'
-    _allow_headers = 'Origin, X-Requested-With, Content-Type, Content-Language'
+    _allow_headers = 'Origin, X-Requested-With, Content-Type, Content-Language, Accept, Accept-Language'
+    _allow_methods = 'GET, POST, OPTIONS'
 
     def __init__(self, app):
         self.app = app
@@ -26,12 +27,14 @@ class CORSMiddleware(object):
             start_response('200 OK', [
                 ('Access-Control-Allow-Origin', self._allow_origin),
                 ('Access-Control-Allow-Headers', self._allow_headers),
+                ('Access-Control-Allow-Methods', self._allow_methods)
             ])
             return ['POST']
         else:
             def start_response_cors(status, headers, exc_info=None):
                 headers.append(('Access-Control-Allow-Origin', self._allow_origin))
                 headers.append(('Access-Control-Allow-Headers', self._allow_headers))
+                headers.append(('Access-Control-Allow-Methods', self._allow_methods))
                 return start_response(status, headers, exc_info)
             return self.app(environ, start_response_cors)
 
@@ -54,7 +57,9 @@ def _parsey_universal_full_handler(environ, start_response):
             ('Content-Length', str(len(message)))
         ])
         return [message]
-
+    except Exception as e:
+        start_response('500 Internal Server Error', [])
+        return []
 
 @CORSMiddleware
 def app(environ, start_response):
@@ -72,7 +77,7 @@ def app(environ, start_response):
         return [swagger]
     elif path == '/':
         start_response('301 Moved Permanently', [('Location', '/v1')])
-        return [b'']
+        return []
     else:
         start_response('404 Not Found', [])
-        return [b'']
+        return []
