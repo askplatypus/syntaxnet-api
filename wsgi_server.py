@@ -41,7 +41,7 @@ class CORSMiddleware(object):
 
 def _parsey_universal_full_handler(environ, start_response):
     text = environ['wsgi.input'].read(int(environ.get('CONTENT_LENGTH', 0)))
-    language_code = environ.get('Content-Language', 'en').lower()
+    language_code = environ.get('HTTP_CONTENT_LANGUAGE', 'en').lower()
 
     try:
         conllu_result = parsey.parsey_universal_full_conllu(text, language_code)
