@@ -42,6 +42,7 @@ Are available languages with the following Universal Dependencies training sets:
 On Debian/Ubuntu
 
 ```
+git clone --recursive --recurse-submodules https://github.com/askplatypus/syntaxnet-api
 sh install-syntaxnet-debian.sh
 gunicorn wsgi_server:app
 ```
