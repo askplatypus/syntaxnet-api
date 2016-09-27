@@ -46,14 +46,14 @@ def _parsey_universal_full_handler(environ, start_response):
     try:
         conllu_result = parsey.parsey_universal_full_conllu(text, language_code)
         start_response('200 OK', [
-            ('Content-Type', 'text/plain'),
+            ('Content-Type', 'text/plain; charset=utf-8'),
             ('Content-Length', str(len(conllu_result)))
         ])
         return [conllu_result]
     except ValueError as e:
         message = str(e)
         start_response('400 Bad Request', [
-            ('Content-Type', 'text/plain'),
+            ('Content-Type', 'text/plain; charset=utf-8'),
             ('Content-Length', str(len(message)))
         ])
         return [message]
