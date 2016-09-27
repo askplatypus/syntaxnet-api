@@ -57,9 +57,6 @@ def _parsey_universal_full_handler(environ, start_response):
             ('Content-Length', str(len(message)))
         ])
         return [message]
-    except Exception as e:
-        start_response('500 Internal Server Error', [])
-        return []
 
 @CORSMiddleware
 def app(environ, start_response):

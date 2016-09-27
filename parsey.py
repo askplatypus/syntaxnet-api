@@ -88,6 +88,7 @@ def parsey_universal_full_conllu(text: str, language_code: str):
             '--alsologtostderr'
         ], stdin=PIPE, stdout=PIPE)
     brain_tokenizer_process.stdin.write(text)
+    brain_tokenizer_process.stdin.close()
 
     #morpher
     brain_morpher_process = Popen([
@@ -137,6 +138,6 @@ def parsey_universal_full_conllu(text: str, language_code: str):
         '--slim_model',
         '--batch_size=1024',
         '--alsologtostderr'
-    ], stdin=brain_tagger_process.stdout)
+    ], stdin=brain_tagger_process.stdout, stdout=PIPE)
     brain_tagger_process.stdout.close()
     return brain_parser_process.communicate()[0]
