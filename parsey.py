@@ -46,6 +46,7 @@ _universal_languages = {
 
 _PARSEY_EVAL = 'tensorflow-models/syntaxnet/bazel-bin/syntaxnet/parser_eval'
 _CONTEXT = 'tensorflow-models/syntaxnet/syntaxnet/models/parsey_universal/context.pbtxt'
+_CONTEXT_TOKENIZE_ZH = 'tensorflow-models/syntaxnet/syntaxnet/models/parsey_universal/context_tokenize_zh.pbtxt'
 _MODELS_DIR = 'tensorflow-models/syntaxnet/universal_models/'
 
 
@@ -64,7 +65,7 @@ def parsey_universal_full_conllu(text: str, language_code: str):
             '--hidden_layer_sizes=256,256',
             '--arg_prefix=brain_tokenizer_zh',
             '--graph_builder=structured',
-            '--task_context={}'.format(_CONTEXT),
+            '--task_context={}'.format(_CONTEXT_TOKENIZE_ZH),
             '--resource_dir={}'.format(model_dir),
             '--model_path={}/tokenizer-params'.format(model_dir),
             '--slim_model',
