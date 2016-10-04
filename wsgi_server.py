@@ -10,6 +10,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+import os
+import re
 
 import parsey
 
@@ -63,18 +65,23 @@ def app(environ, start_response):
     path = environ.get('PATH_INFO')
     if path == '/v1/parsey-universal-full':
         return _parsey_universal_full_handler(environ, start_response)
-    elif path == '/v1/swagger.yaml':
-        swagger_file = open('swagger.yaml', 'rb')
-        swagger = swagger_file.read()
-        swagger_file.close()
-        start_response('200 OK', [
-            ('Content-Type', 'application/yaml'),
-            ('Content-Length', str(len(swagger)))
-        ])
-        return [swagger]
-    elif path == '/':
-        start_response('301 Moved Permanently', [('Location', '/v1')])
+    if path == '/' or path == '/v1' or path == '/v1/swagger':
+        start_response('303 See Other', [('Location', '/v1/swagger/index.html')])
         return []
-    else:
-        start_response('404 Not Found', [])
-        return []
+
+    swagger_path_match = re.match('^/v1/swagger/(.*)$', os.path.normpath(path))
+    if swagger_path_match:
+        try:
+            file = open('swagger/' + swagger_path_match.group(1), 'rb')
+            file_content = file.read()
+            file.close()
+            start_response('200 OK', [
+                ('Content-Length', str(len(file_content)))
+            ])
+            return [file_content]
+        except IOError:
+            start_response('404 Not Found')
+            return []
+
+    start_response('404 Not Found', [])
+    return []

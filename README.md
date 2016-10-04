@@ -1,9 +1,10 @@
 SyntaxNet API
 =============
 
-A small HTTP API for SyntaxNet.
+A small HTTP API for SyntaxNet under Apache 2 Licence.
+Live version at [http://syntaxnet.askplatyp.us](http://syntaxnet.askplatyp.us).
 
-Currently only provides a way to call Parsey trained with universal dependencies;
+Currently only provides a way to call Parsey trained with universal dependencies.
 
 The API documentation is availlable as a Swagger API description in the swagger.yaml file.
 

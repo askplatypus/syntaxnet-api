@@ -1,0 +1,55 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "version": "dev",
+    "title": "Simple API for SyntaxNet",
+    "description": "Allows to do HTTP request to execute NLP processing using SyntaxNet",
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    }
+  },
+  "host": "syntaxnet.askplatyp.us",
+  "basePath": "/v1",
+  "paths": {
+    "/parsey-universal-full": {
+      "post": {
+        "summary": "Executes the full parsing pipeline against Parsey Universal",
+        "description": "See also https://github.com/tensorflow/models/blob/master/syntaxnet/universal.md",
+        "parameters": [
+          {
+            "name": "text",
+            "in": "body",
+            "description": "The text to parse",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Content-Language",
+            "in": "header",
+            "description": "The language to return the entity in. Could be bg, cs, da, hr, el, en, es, et, eu, fi, fr, gl, grc, he, hi, hr, hu, id, it, la, nl, no, pl, pt, sl, sv or zh",
+            "required": true,
+            "type": "string",
+            "maxLength": 3
+          }
+        ],
+        "consumes": [
+          "text/plain; charset=utf-8"
+        ],
+        "produces": [
+          "text/plain; charset=utf-8"
+        ],
+        "responses": {
+          "200": {
+            "description": "The parsing result in the CoNLL-U format http://universaldependencies.org/format.html"
+          },
+          "400": {
+            "description": "Bad request, usually because the Content-Language is not supported"
+          }
+        }
+      }
+    }
+  }
+}
