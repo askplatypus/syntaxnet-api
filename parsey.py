@@ -10,8 +10,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-
+from concurrent.futures import ThreadPoolExecutor
 from subprocess import Popen, PIPE
+from threading import Semaphore
 
 _universal_languages = {
     'grc': 'Ancient_Greek-PROIEL',
@@ -50,94 +51,121 @@ _CONTEXT_TOKENIZE_ZH = 'tensorflow-models/syntaxnet/syntaxnet/models/parsey_univ
 _MODELS_DIR = 'tensorflow-models/syntaxnet/universal_models/'
 
 
-def parsey_universal_full_conllu(text: str, language_code: str):
-    if language_code not in _universal_languages:
-        raise ValueError('{} is not a supported language code. The supported language codes are {}'.format(language_code, _universal_languages.keys()))
+class _ParseyUniversal:
+    def __init__(self, language_code: str):
+        if language_code not in _universal_languages:
+            raise ValueError(
+                '{} is not a supported language code. The supported language codes are {}'.format(language_code,
+                                                                                                  _universal_languages.keys()))
 
-    model_dir = _MODELS_DIR + _universal_languages[language_code]
+        model_dir = _MODELS_DIR + _universal_languages[language_code]
 
-    #tokenizer
-    if language_code == 'zh':
-        brain_tokenizer_process = Popen([
+        # tokenizer
+        if language_code == 'zh':
+            self._brain_tokenizer_process = Popen([
+                _PARSEY_EVAL,
+                '--input=stdin-untoken',
+                '--output=stdin-untoken',
+                '--hidden_layer_sizes=256,256',
+                '--arg_prefix=brain_tokenizer_zh',
+                '--graph_builder=structured',
+                '--task_context={}'.format(_CONTEXT_TOKENIZE_ZH),
+                '--resource_dir={}'.format(model_dir),
+                '--model_path={}/tokenizer-params'.format(model_dir),
+                '--slim_model',
+                '--batch_size=1024',
+                '--alsologtostderr'
+            ], stdin=PIPE, stdout=PIPE)
+        else:
+            self._brain_tokenizer_process = Popen([
+                _PARSEY_EVAL,
+                '--input=stdin-untoken',
+                '--output=stdin-untoken',
+                '--hidden_layer_sizes=128,128',
+                '--arg_prefix=brain_tokenizer',
+                '--graph_builder=greedy',
+                '--task_context={}'.format(_CONTEXT),
+                '--resource_dir={}'.format(model_dir),
+                '--model_path={}/tokenizer-params'.format(model_dir),
+                '--slim_model',
+                '--batch_size=32',
+                '--alsologtostderr'
+            ], stdin=PIPE, stdout=PIPE)
+
+        # morpher
+        self._brain_morpher_process = Popen([
             _PARSEY_EVAL,
-            '--input=stdin-untoken',
-            '--output=stdin-untoken',
-            '--hidden_layer_sizes=256,256',
-            '--arg_prefix=brain_tokenizer_zh',
+            '--input=stdin',
+            '--output=stdout-conll',
+            '--hidden_layer_sizes=64',
+            '--arg_prefix=brain_morpher',
             '--graph_builder=structured',
-            '--task_context={}'.format(_CONTEXT_TOKENIZE_ZH),
+            '--task_context={}'.format(_CONTEXT),
             '--resource_dir={}'.format(model_dir),
-            '--model_path={}/tokenizer-params'.format(model_dir),
+            '--model_path={}/morpher-params'.format(model_dir),
             '--slim_model',
             '--batch_size=1024',
             '--alsologtostderr'
-        ], stdin=PIPE, stdout=PIPE)
-    else:
-        brain_tokenizer_process = Popen([
+        ], stdin=self._brain_tokenizer_process.stdout, stdout=PIPE)
+
+        # tagger
+        self._brain_tagger_process = Popen([
             _PARSEY_EVAL,
-            '--input=stdin-untoken',
-            '--output=stdin-untoken',
-            '--hidden_layer_sizes=128,128',
-            '--arg_prefix=brain_tokenizer',
-            '--graph_builder=greedy',
+            '--input=stdin-conll',
+            '--output=stdout-conll',
+            '--hidden_layer_sizes=64',
+            '--arg_prefix=brain_tagger',
+            '--graph_builder=structured',
             '--task_context={}'.format(_CONTEXT),
             '--resource_dir={}'.format(model_dir),
-            '--model_path={}/tokenizer-params'.format(model_dir),
+            '--model_path={}/tagger-params'.format(model_dir),
             '--slim_model',
-            '--batch_size=32',
+            '--batch_size=1024',
             '--alsologtostderr'
-        ], stdin=PIPE, stdout=PIPE)
-    brain_tokenizer_process.stdin.write(text)
-    brain_tokenizer_process.stdin.close()
+        ], stdin=self._brain_morpher_process.stdout, stdout=PIPE)
 
-    #morpher
-    brain_morpher_process = Popen([
-        _PARSEY_EVAL,
-        '--input=stdin',
-        '--output=stdout-conll',
-        '--hidden_layer_sizes=64',
-        '--arg_prefix=brain_morpher',
-        '--graph_builder=structured',
-        '--task_context={}'.format(_CONTEXT),
-        '--resource_dir={}'.format(model_dir),
-        '--model_path={}/morpher-params'.format(model_dir),
-        '--slim_model',
-        '--batch_size=1024',
-        '--alsologtostderr'
-    ], stdin=brain_tokenizer_process.stdout, stdout=PIPE)
-    brain_tokenizer_process.stdout.close()
+        # parser
+        self._brain_parser_process = Popen([
+            _PARSEY_EVAL,
+            '--input=stdin-conll',
+            '--output=stdout-conll',
+            '--hidden_layer_sizes=512,512',
+            '--arg_prefix=brain_parser',
+            '--graph_builder=structured',
+            '--task_context={}'.format(_CONTEXT),
+            '--resource_dir={}'.format(model_dir),
+            '--model_path={}/parser-params'.format(model_dir),
+            '--slim_model',
+            '--batch_size=1024',
+            '--alsologtostderr'
+        ], stdin=self._brain_tagger_process.stdout, stdout=PIPE)
 
-    #tagger
-    brain_tagger_process = Popen([
-        _PARSEY_EVAL,
-        '--input=stdin-conll',
-        '--output=stdout-conll',
-        '--hidden_layer_sizes=64',
-        '--arg_prefix=brain_tagger',
-        '--graph_builder=structured',
-        '--task_context={}'.format(_CONTEXT),
-        '--resource_dir={}'.format(model_dir),
-        '--model_path={}/tagger-params'.format(model_dir),
-        '--slim_model',
-        '--batch_size=1024',
-        '--alsologtostderr'
-    ], stdin=brain_morpher_process.stdout, stdout=PIPE)
-    brain_morpher_process.stdout.close()
+    def full_parse_conllu(self, text: str) -> str:
+        self._brain_tokenizer_process.stdin.write(text)
+        self._brain_tokenizer_process.stdin.close()
+        self._brain_tokenizer_process.stdout.close()
+        self._brain_morpher_process.stdout.close()
+        self._brain_tagger_process.stdout.close()
+        return self._brain_parser_process.communicate()[0]
 
-    #parser
-    brain_parser_process = Popen([
-        _PARSEY_EVAL,
-        '--input=stdin-conll',
-        '--output=stdout-conll',
-        '--hidden_layer_sizes=512,512',
-        '--arg_prefix=brain_parser',
-        '--graph_builder=structured',
-        '--task_context={}'.format(_CONTEXT),
-        '--resource_dir={}'.format(model_dir),
-        '--model_path={}/parser-params'.format(model_dir),
-        '--slim_model',
-        '--batch_size=1024',
-        '--alsologtostderr'
-    ], stdin=brain_tagger_process.stdout, stdout=PIPE)
-    brain_tagger_process.stdout.close()
-    return brain_parser_process.communicate()[0]
+
+_executor = ThreadPoolExecutor(max_workers=8)
+
+_loaded_models_futures = {}
+_loaded_models_mutex = {}
+for language_code in _universal_languages.keys():
+    _loaded_models_futures[language_code] = _executor.submit(_ParseyUniversal, language_code)
+    _loaded_models_mutex[language_code] = Semaphore()
+
+
+def parsey_universal_full_conllu(text: str, language_code: str) -> str:
+    if language_code not in _universal_languages:
+        raise ValueError(
+            '{} is not a supported language code. The supported language codes are {}'.format(language_code,
+                                                                                              _universal_languages.keys()))
+
+    _loaded_models_mutex[language_code].acquire()
+    result = _loaded_models_futures[language_code].result().full_parse_conllu(text)
+    _loaded_models_futures[language_code] = _executor.submit(_ParseyUniversal, language_code)
+    _loaded_models_mutex[language_code].release()
+    return result
