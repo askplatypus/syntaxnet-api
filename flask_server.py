@@ -13,8 +13,7 @@ limitations under the License.
 import logging
 
 from flask import Flask, request, jsonify, redirect
-from flask.ext.swaggerui import build_static_blueprint
-from flask.ext.swaggerui import render_swaggerui
+from flask_swaggerui import build_static_blueprint, render_swaggerui
 from werkzeug.exceptions import BadRequest
 
 import parsey
