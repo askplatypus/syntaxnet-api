@@ -14,7 +14,7 @@ cd ..
 bazel test syntaxnet/... util/utf8/...
 mkdir universal_models
 cd universal_models
-for LANG in Ancient_Greek-PROIEL Basque Bulgarian Chinese Croatian Czech Danish Dutch English Estonian Finnish French Galician German Greek Hebrew Hindi Hungarian Indonesian Italian Latin-PROIEL Norwegian Persian Polish Portuguese Slovenian Spanish Swedish; do
+for LANG in Ancient_Greek-PROIEL Basque Bulgarian Chinese Croatian Czech Danish Dutch English Estonian Finnish French Galician German Greek Hebrew Hindi Hungarian Indonesian Italian Latin-PROIEL Norwegian Persian Polish Portuguese Russian Slovenian Spanish Swedish; do
     wget http://download.tensorflow.org/models/parsey_universal/${LANG}.zip
     unzip ${LANG}.zip
     rm ${LANG}.zip
