@@ -84,7 +84,8 @@ def _v1_spec():
                             'required': True,
                             'type': 'string',
                             'enum': ['bg', 'cs', 'da', 'hr', 'el', 'en', 'es', 'et', 'eu', 'fi', 'fr', 'gl', 'grc',
-                                     'he', 'hi', 'hr', 'hu', 'id', 'it', 'la', 'nl', 'no', 'pl', 'pt', 'sl', 'sv', 'zh']
+                                     'he', 'hi', 'hr', 'hu', 'id', 'it', 'la', 'nl', 'no', 'pl', 'pt', 'ru' 'sl', 'sv',
+                                     'zh']
                         }
                     ],
                     'consumes': [
