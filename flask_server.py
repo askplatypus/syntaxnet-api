@@ -60,7 +60,7 @@ def _v1_spec():
                 'url': 'http://www.apache.org/licenses/LICENSE-2.0.html'
             }
         },
-        'host': 'syntaxnet.askplatyp.us',
+        'host': '127.0.0.1:7000',
         'basePath': '/v1',
         'paths': {
             '/parsey-universal-full': {

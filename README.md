@@ -34,6 +34,7 @@ Are available languages with the following Universal Dependencies training sets:
 * no: Norwegian
 * pl: Polish
 * pt: Portuguese
+* ru: Russian
 * sl: Slovenian
 * es: Spanish
 * sv: Swedish

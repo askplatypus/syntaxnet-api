@@ -39,6 +39,7 @@ _universal_languages = {
     'no': 'Norwegian',
     'pl': 'Polish',
     'pt': 'Portuguese',
+    'ru': 'Russian',
     'sl': 'Slovenian',
     'es': 'Spanish',
     'sv': 'Swedish'
