@@ -44,6 +44,7 @@ On Debian/Ubuntu
 
 ```
 git clone --recursive --recurse-submodules https://github.com/askplatypus/syntaxnet-api
+cd syntaxnet-api
 sh install-syntaxnet-debian.sh
 pip3 install -r requirements.txt
 python3 flask_server.py
