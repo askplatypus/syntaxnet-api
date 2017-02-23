@@ -14,7 +14,7 @@ from concurrent.futures import ThreadPoolExecutor
 from subprocess import Popen, PIPE
 from threading import Semaphore
 
-_universal_languages = {
+available_languages = {
     'grc': 'Ancient_Greek-PROIEL',
     'eu': 'Basque',
     'bg': 'Bulgarian',
@@ -53,12 +53,12 @@ _MODELS_DIR = 'tensorflow-models/syntaxnet/universal_models/'
 
 class _ParseyUniversal:
     def __init__(self, language_code: str):
-        if language_code not in _universal_languages:
+        if language_code not in available_languages:
             raise ValueError(
                 '{} is not a supported language code. The supported language codes are {}'.format(language_code,
-                                                                                                  _universal_languages.keys()))
+                                                                                                  available_languages.keys()))
 
-        model_dir = _MODELS_DIR + _universal_languages[language_code]
+        model_dir = _MODELS_DIR + available_languages[language_code]
 
         # tokenizer
         if language_code == 'zh':
@@ -153,16 +153,16 @@ _executor = ThreadPoolExecutor(max_workers=8)
 
 _loaded_models_futures = {}
 _loaded_models_mutex = {}
-for language_code in _universal_languages.keys():
+for language_code in available_languages.keys():
     _loaded_models_futures[language_code] = _executor.submit(_ParseyUniversal, language_code)
     _loaded_models_mutex[language_code] = Semaphore()
 
 
 def parsey_universal_full_conllu(text: str, language_code: str) -> str:
-    if language_code not in _universal_languages:
+    if language_code not in available_languages:
         raise ValueError(
             '{} is not a supported language code. The supported language codes are {}'.format(language_code,
-                                                                                              _universal_languages.keys()))
+                                                                                              available_languages.keys()))
 
     _loaded_models_mutex[language_code].acquire()
     result = _loaded_models_futures[language_code].result().full_parse_conllu(text)
