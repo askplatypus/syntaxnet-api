@@ -1,5 +1,5 @@
 """
-Copyright 2016 Thomas Pellissier Tanon All Rights Reserved.
+Copyright 2016-2017 Thomas Pellissier Tanon All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -14,40 +14,38 @@ import logging
 
 from flask import Flask, request, jsonify, redirect
 from flask_swaggerui import build_static_blueprint, render_swaggerui
-from werkzeug.exceptions import BadRequest
-
-import parsey
+from syntaxnet_wrapper import parser, language_code_to_model_name
+from werkzeug.exceptions import BadRequest, InternalServerError
 
 # Flask setup
-_flask_app = Flask(__name__)
+app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
-@_flask_app.route('/')
+@app.route('/')
 def _root():
     return redirect('/v1')
 
 
-@_flask_app.route('/v1')
+@app.route('/v1')
 def _v1():
     return render_swaggerui(swagger_spec_path='/v1/swagger.json')
 
 
-@_flask_app.route('/v1/parsey-universal-full', methods=['POST'])
+@app.route('/v1/parsey-universal-full', methods=['POST'])
 def _parsey_universal_full_handler():
     text = request.get_data()
     language_code = request.headers.get('Content-Language', 'en').lower()
-    print(text)
-    print(language_code)
-
     try:
-        conllu = parsey.parsey_universal_full_conllu(text, language_code)
-        return _flask_app.response_class(conllu, mimetype='text/plain; charset=utf-8')
+        conllu = parser[language_code].query(text, returnRaw=True)
+        if conllu is None:
+            raise InternalServerError('Bad SyntaxNet output')
+        return app.response_class(conllu, mimetype='text/plain; charset=utf-8')
     except ValueError as e:
         raise BadRequest(e)
 
 
-@_flask_app.route('/v1/swagger.json')
+@app.route('/v1/swagger.json')
 def _v1_spec():
     return jsonify({
         'swagger': '2.0',
@@ -83,7 +81,7 @@ def _v1_spec():
                             'description': 'The text language.',
                             'required': True,
                             'type': 'string',
-                            'enum': sorted(parsey.available_languages.keys())
+                            'enum': sorted(language_code_to_model_name.keys())
                         }
                     ],
                     'consumes': [
@@ -106,6 +104,7 @@ def _v1_spec():
     })
 
 
-_flask_app.register_blueprint(build_static_blueprint('swaggerui', __name__))
+app.register_blueprint(build_static_blueprint('swaggerui', __name__))
 
-_flask_app.run(port=7000)
+if __name__ == '__main__':
+    app.run(port=7000)
