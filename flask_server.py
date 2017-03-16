@@ -17,6 +17,9 @@ from flask_swaggerui import build_static_blueprint, render_swaggerui
 from syntaxnet_wrapper import parser, language_code_to_model_name
 from werkzeug.exceptions import BadRequest, InternalServerError
 
+# Overrides available languages map
+language_code_to_model_name['en'] = 'English'  # Do not use Parsey McParseface
+
 # Flask setup
 app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
