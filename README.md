@@ -3,7 +3,7 @@ SyntaxNet API
 
 A small HTTP API for SyntaxNet under Apache 2 Licence.
 Live version at [http://syntaxnet.askplatyp.us](http://syntaxnet.askplatyp.us).
-It relies on [https://github.com/livingbio/syntaxnet_wrapper](syntaxnet_wrapper).
+It relies on [syntaxnet_wrapper](https://github.com/livingbio/syntaxnet_wrapper).
 
 Currently only provides a way to call SyntaxNet universal dependencies models.
 
