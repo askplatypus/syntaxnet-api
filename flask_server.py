@@ -37,7 +37,7 @@ def _v1():
 
 @app.route('/v1/parsey-universal-full', methods=['POST'])
 def _parsey_universal_full_handler():
-    text = request.get_data()
+    text = request.get_data().decode('utf-8')
     language_code = request.headers.get('Content-Language', 'en').lower()
     try:
         conllu = parser[language_code].query(text, returnRaw=True)
